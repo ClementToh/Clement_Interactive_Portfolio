@@ -1,0 +1,8 @@
+{
+  "name": "Clement Toh | Hardware Systems & Validation Portfolio",
+  "description": "Interactive mechatronics validation telemetry and US Co-Op placement dossier for Clement Toh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
