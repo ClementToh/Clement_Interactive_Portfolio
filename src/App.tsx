@@ -2,6 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import TelemetryDashboard from "./components/TelemetryDashboard";
 import CADShowcase from "./components/CADShowcase";
+import SpectrometerSync from "./components/SpectrometerSync";
+import WebcamStreaming from "./components/WebcamStreaming";
+import ThermalShroud from "./components/ThermalShroud";
 import { 
   PROJECTS, 
   EDUCATION_DOSSIER, 
@@ -10,7 +13,7 @@ import {
   LEADERSHIP_DOSSIER, 
   DOCUMENT_REGISTRY 
 } from "./data";
-import { Menu, X, 
+import {   Menu, X, 
   Briefcase, 
   Linkedin, 
   Mail, 
@@ -35,7 +38,7 @@ import { Menu, X,
   Terminal,
   Layers,
   FileCheck2
-} from "lucide-react";
+, Video, Activity , Thermometer } from "lucide-react";
 
 const getDocStyles = (name: string) => {
   if (name.includes("Resume")) {
@@ -92,7 +95,7 @@ const getProjectContainerStyle = (company: string) => {
 };
 
 export default function App() {
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<"telemetry" | "cad">("telemetry");
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<"telemetry" | "cad" | "spectrometer" | "webcam" | "thermal">("telemetry");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("jd-union");
   const [dossierTab, setDossierTab] = useState<"education" | "experience" | "recommendations" | "leadership">("experience");
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -135,8 +138,7 @@ export default function App() {
             <a href="#projects-catalog" className="hover:text-neutral-900 transition-colors">Projects</a>
             <a href="#professional-background" className="hover:text-neutral-900 transition-colors">Experience</a>
             
-            <button onClick={handleCopyEmail} className="hover:text-neutral-900 transition-colors cursor-pointer">Resume</button>
-          </div>
+            <button onClick={handleCopyEmail} className="hover:text-neutral-900 transition-colors cursor-pointer">Resume</button></div>
           
           {/* Mobile Nav Toggle */}
           <button 
@@ -297,20 +299,8 @@ export default function App() {
           </div>
 
           {/* Core Lab Switchers */}
-          <div className="flex justify-center border-b border-neutral-200">
-            <div className="flex gap-4 font-mono text-xs md:text-sm">
-              <button
-                onClick={() => setActiveWorkspaceTab("telemetry")}
-                className={`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer ${
-                  activeWorkspaceTab === "telemetry"
-                    ? "border-neutral-900 text-neutral-900"
-                    : "border-transparent text-neutral-400 hover:text-neutral-700"
-                }`}
-              >
-                <Cpu className="w-4 h-4 shrink-0" />
-                <span className="hidden sm:inline">Live EOS M 290</span> Telemetry Panel
-              </button>
-              
+                    <div className="flex justify-start md:justify-center border-b border-neutral-200 overflow-x-auto hide-scrollbar whitespace-nowrap">
+            <div className="flex gap-2 font-mono text-xs">
               <button
                 onClick={() => setActiveWorkspaceTab("cad")}
                 className={`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer ${
@@ -320,17 +310,66 @@ export default function App() {
                 }`}
               >
                 <Layers className="w-4 h-4 shrink-0" />
-                Mechanical CAD & DFM
+                Laser Workstation CAD
+              </button>
+              
+              <button
+                onClick={() => setActiveWorkspaceTab("telemetry")}
+                className={`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer ${
+                  activeWorkspaceTab === "telemetry"
+                    ? "border-neutral-900 text-neutral-900"
+                    : "border-transparent text-neutral-400 hover:text-neutral-700"
+                }`}
+              >
+                <Cpu className="w-4 h-4 shrink-0" />
+                Telemetry Pipeline
               </button>
 
+              <button
+                onClick={() => setActiveWorkspaceTab("spectrometer")}
+                className={`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer ${
+                  activeWorkspaceTab === "spectrometer"
+                    ? "border-neutral-900 text-neutral-900"
+                    : "border-transparent text-neutral-400 hover:text-neutral-700"
+                }`}
+              >
+                <Activity className="w-4 h-4 shrink-0" />
+                Spectrometer Sync
+              </button>
 
+              <button
+                onClick={() => setActiveWorkspaceTab("webcam")}
+                className={`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer ${
+                  activeWorkspaceTab === "webcam"
+                    ? "border-neutral-900 text-neutral-900"
+                    : "border-transparent text-neutral-400 hover:text-neutral-700"
+                }`}
+              >
+                <Video className="w-4 h-4 shrink-0" />
+                Webcam Streaming
+              </button>
+              <button
+                onClick={() => setActiveWorkspaceTab("thermal")}
+                className={`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer ${
+                  activeWorkspaceTab === "thermal"
+                    ? "border-neutral-900 text-neutral-900"
+                    : "border-transparent text-neutral-400 hover:text-neutral-700"
+                }`}
+              >
+                <Thermometer className="w-4 h-4 shrink-0" />
+                Thermal Shroud
+              </button>
             </div>
           </div>
 
           {/* Active Work Panel viewport */}
-          <div className="transition-all duration-300">
-            {activeWorkspaceTab === "telemetry" && <TelemetryDashboard />}
+                    <div className="transition-all duration-300">
             {activeWorkspaceTab === "cad" && <CADShowcase />}
+            {activeWorkspaceTab === "telemetry" && <TelemetryDashboard />}
+            {activeWorkspaceTab === "spectrometer" && <SpectrometerSync />}
+            
+            {activeWorkspaceTab === "webcam" && <WebcamStreaming />}
+            {activeWorkspaceTab === "thermal" && <ThermalShroud />}
           </div>
 
         </div>

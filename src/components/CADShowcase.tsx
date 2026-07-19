@@ -1,35 +1,25 @@
-import React, { useState, Suspense, ErrorInfo, ReactNode } from "react";
-import { PROJECTS } from "../data";
-import { Layers, Settings, Eye, HelpCircle, HardDrive, Thermometer, Box } from "lucide-react";
+import { useState, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Center, Stage, Bounds, useGLTF } from "@react-three/drei";
-
-class ErrorBoundary extends React.Component<{ fallback: any; children: ReactNode }, { hasError: boolean, error: any }> {
-  constructor(props: { fallback: ReactNode; children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
-  componentDidCatch(error: Error, info: ErrorInfo) { console.error("GLTF Error:", error, info); }
-  render() {
-    if (this.state.hasError) return typeof this.props.fallback === "function" ? this.props.fallback(this.state.error) : this.props.fallback;
-    return this.props.children;
-  }
-}
+import { useGLTF, OrbitControls, Bounds, Center } from "@react-three/drei";
+import { ErrorBoundary } from "react-error-boundary";
+import { Layers, Settings, Eye, HelpCircle, HardDrive } from "lucide-react";
+import { PROJECTS } from "../data";
 
 function Model({ url }: { url: string }) {
   const { scene } = useGLTF(url);
   return <primitive object={scene} />;
 }
 
-
 export default function CADShowcase() {
-  const [selectedProject, setSelectedProject] = useState("jd-union");
   const [exploded, setExploded] = useState(false);
   const [activePart, setActivePart] = useState<string | null>(null);
 
-  const project = PROJECTS.find((p) => p.id === selectedProject) || PROJECTS[0];
+  // We get the selected project here. Since this is an interactive demo, we default to jd-union.
+  const selectedProject = "jd-union";
+  const project = PROJECTS.find((p) => p.id === "jd-union") || PROJECTS[0];
   const cadData = project.cadInteractiveData;
+
+  const headerDetails = { title: "CAD Assembly & DFM Specifications", sub: "Explore mechanical design parameters and structural dimension constraints." };
 
   return (
     <div id="cad-showcase" className="bg-white rounded-2xl border border-neutral-200 shadow-xl overflow-hidden font-sans">
@@ -39,35 +29,18 @@ export default function CADShowcase() {
         <div>
           <h3 className="text-neutral-900 font-bold text-base flex items-center gap-2">
             <Layers className="w-5 h-5 text-neutral-500 shrink-0" />
-            CAD Assembly & DFM Specifications
+            {headerDetails.title}
           </h3>
-          <p className="text-xs text-neutral-500 mt-0.5">Explore the mechanical design parameters and structural dimension constraints.</p>
-        </div>
-
-        {/* Project select */}
-        <div className="flex bg-neutral-100 p-0.5 rounded-lg text-xs font-mono">
-          <button
-            onClick={() => { setSelectedProject("jd-union"); setActivePart(null); }}
-            className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${selectedProject === "jd-union" ? "bg-white text-neutral-900 font-semibold shadow-sm" : "text-neutral-500 hover:text-neutral-900"}`}
-          >
-            Laser Workstation
-          </button>
-          <button
-            onClick={() => { setSelectedProject("astar-iiot"); setActivePart(null); }}
-            className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${selectedProject === "astar-iiot" ? "bg-white text-neutral-900 font-semibold shadow-sm" : "text-neutral-500 hover:text-neutral-900"}`}
-          >
-            EOS M 290 Passthrough
-          </button>
+          <p className="text-xs text-neutral-500 mt-0.5">{headerDetails.sub}</p>
         </div>
       </div>
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12">
-        
-        {/* Visual Assembly Canvas Mock (7 cols) */}
-        <div className="lg:col-span-7 bg-neutral-950 p-6 relative flex flex-col justify-between min-h-[400px]">
+        {/* CAD Viewer Panel (7 cols) */}
+        <div className="lg:col-span-7 bg-neutral-950 p-6 flex flex-col justify-between min-h-[500px]">
           
-          {/* Top telemetry specs */}
+          {/* Top spec row */}
           <div className="flex justify-between font-mono text-[10px] text-neutral-500">
             <span>UNITS: MILLIMETERS (MM)</span>
             <span>SYSTEM ASSEMBLY RIGIDITY: {cadData?.vibrationSpec}</span>
@@ -75,148 +48,62 @@ export default function CADShowcase() {
 
           {/* Interactive exploded animation view */}
           <div className="flex-1 flex flex-col items-center justify-center relative py-10">
-            {/* Visual Assembly representation */}
-            <div className="relative w-full h-full min-h-[350px] border border-neutral-850 bg-neutral-950/20 rounded-xl flex flex-col items-center justify-center p-0 overflow-hidden shadow-inner">
+            
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Background projection graphics */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+                <div className="w-full h-full border border-neutral-800 rounded-lg" style={{ backgroundImage: "radial-gradient(#333 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
+                <div className="absolute top-10 left-10 w-20 h-20 border-l border-t border-neutral-500"></div>
+                <div className="absolute bottom-10 right-10 w-20 h-20 border-r border-b border-neutral-500"></div>
+              </div>
               
-              {/* Background vector lines simulating a grid blueprint */}
-              <div className="absolute inset-0 pixel-grid opacity-10"></div>
-              
-              {/* Custom Blueprint lines to look like engineering drawing */}
-              <div className="absolute top-4 left-4 font-mono text-[9px] text-neutral-600 border-l border-t border-neutral-800 p-1">
-                3RD ANGLE PROJECTION
+              <div className="absolute left-0 top-1/4 text-neutral-600 font-mono text-[9px] uppercase tracking-widest -rotate-90 origin-left">
+                3rd Angle Projection
               </div>
 
-              {/* Dynamic Exploded representation based on projects */}
-              <div className="w-full h-full flex flex-col items-center relative z-10">
+              {/* Central 3D Model / Error Boundary */}
+              <div className="relative z-10 w-full h-full flex items-center justify-center">
                 {selectedProject === "jd-union" ? (
-                  <ErrorBoundary fallback={(error: any) => (
-                  <div className="space-y-3 w-48 transition-all duration-500 relative z-10">
-                    <div className="absolute -top-8 left-0 right-0 text-[9px] text-rose-400 font-mono text-center bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
-                      3D Model Error: {error?.message || "Unknown error"}
+                  <ErrorBoundary fallbackRender={({ error: err }) => (
+                    <div className="flex flex-col items-center justify-center space-y-4 w-64 transition-all duration-500 relative z-10">
+                      <div className="absolute -top-12 left-0 right-0 text-[9px] text-rose-400 font-mono text-center bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
+                        3D Model Not Available - Using Fallback
+                      </div>
+                      <div onClick={() => setActivePart("IPG Ytterbium Fibre laser")} className={`p-3 rounded border text-center transition-all cursor-pointer ${activePart === "IPG Ytterbium Fibre laser" ? "bg-rose-500 text-white border-rose-400 font-semibold shadow-lg shadow-rose-900/30" : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-rose-500 hover:text-white"}`}>
+                        <span className="font-mono text-xs block">Laser Optic Assembly</span>
+                        <span className="text-[9px] block opacity-80">IPG Fibre Source + QBH Head</span>
+                      </div>
+                      <div onClick={() => setActivePart("Constrained 4040 Al Chassis")} className={`p-4 rounded border text-center transition-all cursor-pointer ${activePart === "Constrained 4040 Al Chassis" ? "bg-blue-500 text-white border-blue-400 font-semibold shadow-lg shadow-blue-900/30" : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-blue-500 hover:text-white"}`}>
+                        <span className="font-mono text-xs block">Vibration-Isolated Chassis</span>
+                        <span className="text-[9px] block opacity-80">4040 Extruded Aluminium Frame</span>
+                      </div>
+                      <div onClick={() => setActivePart("Dual-Chamber Chiller Routing")} className={`p-3 rounded border text-center transition-all cursor-pointer ${activePart === "Dual-Chamber Chiller Routing" ? "bg-amber-500 text-white border-amber-400 font-semibold shadow-lg shadow-amber-900/30" : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-amber-500 hover:text-white"}`}>
+                        <span className="font-mono text-xs block">Thermal Cooling Duct</span>
+                        <span className="text-[9px] block opacity-80">2.4 kW Heat Dissipation Loop</span>
+                      </div>
                     </div>
-                    {/* Laser optic core */}
-                    <div
-                      onClick={() => setActivePart("IPG Ytterbium Fibre laser")}
-                      className={`p-2.5 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[-24px] rotate-1 scale-105" : ""
-                      } ${
-                        activePart === "IPG Ytterbium Fibre laser"
-                          ? "bg-rose-500 text-white border-rose-400 font-semibold shadow-lg shadow-rose-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-rose-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">Laser Optic Assembly</span>
-                      <span className="text-[9px] block opacity-80">IPG Fibre Source + QBH Head</span>
+                  )}>
+                    <div className="w-full h-full flex flex-col items-center justify-center relative z-10" style={{ height: "100%", width: "100%", minHeight: "350px" }}>
+                      <div className="absolute top-2 right-2 z-20 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400 border border-neutral-700 rounded shadow-md pointer-events-none">
+                        Drag to rotate | Scroll to zoom
+                      </div>
+                      <Suspense fallback={<div className="text-neutral-500 font-mono text-xs">Loading 3D Model...</div>}>
+                        <Canvas camera={{ position: [0, 0, 2.5], fov: 50 }} style={{ width: "100%", height: "100%", minHeight: "350px" }}>
+                          <ambientLight intensity={1} />
+                          <directionalLight position={[10, 10, 10]} intensity={2} />
+                          <Bounds fit clip observe margin={1.2}>
+                            <Center>
+                              <Model url="/movable_laser_station.glb" />
+                            </Center>
+                          </Bounds>
+                          <OrbitControls makeDefault autoRotate autoRotateSpeed={1.5} />
+                        </Canvas>
+                      </Suspense>
                     </div>
-                    {/* Precision motion XY stage */}
-                    <div
-                      onClick={() => setActivePart("Optomechanical XY Stage")}
-                      className={`p-2 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[-8px] scale-102" : ""
-                      } ${
-                        activePart === "Optomechanical XY Stage"
-                          ? "bg-blue-500 text-white border-blue-400 font-semibold shadow-lg shadow-blue-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-blue-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">Precision Kinematics</span>
-                      <span className="text-[9px] block opacity-80">Optomechanical Galvanometer</span>
-                    </div>
-                    {/* Aluminum chassis frame */}
-                    <div
-                      onClick={() => setActivePart("Constrained 4040 Al Chassis")}
-                      className={`p-3 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[12px] rotate-[-1deg] scale-98" : ""
-                      } ${
-                        activePart === "Constrained 4040 Al Chassis"
-                          ? "bg-emerald-500 text-white border-emerald-400 font-semibold shadow-lg shadow-emerald-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-emerald-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">Vibration Isolated Frame</span>
-                      <span className="text-[9px] block opacity-80">Constrained 4040 Aluminum Extrusion</span>
-                    </div>
-                    {/* Chiller / Cooling system */}
-                    <div
-                      onClick={() => setActivePart("Dual-Chamber Chiller Routing")}
-                      className={`p-2 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[28px] scale-95" : ""
-                      } ${
-                        activePart === "Dual-Chamber Chiller Routing"
-                          ? "bg-amber-500 text-white border-amber-400 font-semibold shadow-lg shadow-amber-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-amber-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">Thermal Cooling Duct</span>
-                      <span className="text-[9px] block opacity-80">2.4 kW Heat Dissipation Loop</span>
-                    </div>
-                  </div>
-                )}>
-                  <div className="w-full h-full flex flex-col items-center justify-center relative z-10" style={{ height: "100%", width: "100%", minHeight: "350px" }}>
-                    <div className="absolute top-2 right-2 z-20 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400 border border-neutral-700 rounded shadow-md pointer-events-none">
-                      Drag to rotate | Scroll to zoom
-                    </div>
-                    <Suspense fallback={<div className="text-neutral-500 font-mono text-xs">Loading 3D Model...</div>}>
-                      <Canvas camera={{ position: [0, 0, 2.5], fov: 50 }} style={{ width: "100%", height: "100%", minHeight: "350px" }}>
-                        <ambientLight intensity={1} /><directionalLight position={[10, 10, 10]} intensity={2} /><Bounds fit clip observe margin={1.2}>
-                          <Center>
-                            <Model url="/movable_laser_station_uncompressed.glb" />
-                          </Center>
-                        </Bounds>
-                        <OrbitControls makeDefault autoRotate autoRotateSpeed={1.5} />
-                      </Canvas>
-                    </Suspense>
-                  </div>
-                </ErrorBoundary>
+                  </ErrorBoundary>
                 ) : (
-                  /* A*STAR Passthrough layers */
-                  <div className="space-y-4 w-48 transition-all duration-500">
-                    
-                    {/* Argon seal */}
-                    <div
-                      onClick={() => setActivePart("M5Stack Core2 Edge Device")}
-                      className={`p-2 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[-20px] scale-105" : ""
-                      } ${
-                        activePart === "M5Stack Core2 Edge Device"
-                          ? "bg-violet-500 text-white border-violet-400 font-semibold shadow-lg shadow-violet-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-violet-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">Telemetry Edge Node</span>
-                      <span className="text-[9px] block opacity-80">M5Stack ESP32 Edge Device</span>
-                    </div>
-
-                    {/* Hermetic collar plate */}
-                    <div
-                      onClick={() => setActivePart("NI-9236 Strain Gauge Module")}
-                      className={`p-3 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[0px]" : ""
-                      } ${
-                        activePart === "NI-9236 Strain Gauge Module"
-                          ? "bg-blue-500 text-white border-blue-400 font-semibold shadow-lg shadow-blue-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-blue-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">13mm Hermetic Passthrough</span>
-                      <span className="text-[9px] block opacity-80">Sealed Flange Collar (Stainless Steel)</span>
-                    </div>
-
-                    {/* Argon atmosphere vacuum chamber */}
-                    <div
-                      onClick={() => setActivePart("Grafana Web Interface")}
-                      className={`p-2 rounded border text-center transition-all cursor-pointer ${
-                        exploded ? "translate-y-[20px] scale-95" : ""
-                      } ${
-                        activePart === "Grafana Web Interface"
-                          ? "bg-emerald-500 text-white border-emerald-400 font-semibold shadow-lg shadow-emerald-900/30"
-                          : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-emerald-500 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-mono text-xs block">Active Vacuum Core</span>
-                      <span className="text-[9px] block opacity-80">EOS Printer Argon Chamber Integrity</span>
-                    </div>
-
+                  <div className="flex flex-col items-center justify-center space-y-4 text-neutral-600 font-mono text-xs h-full w-full opacity-50">
+                    <p>Interactive CAD preview not available for this project.</p>
                   </div>
                 )}
               </div>
@@ -227,14 +114,8 @@ export default function CADShowcase() {
           {/* Bottom control row */}
           <div className="flex justify-between items-center bg-neutral-900/80 p-3 rounded-lg border border-neutral-800 font-mono text-[11px]">
             <span className="text-neutral-400">Total Weight: <span className="text-neutral-200 font-bold">{cadData?.assemblyWeight}</span></span>
-            <button
-              onClick={() => setExploded(!exploded)}
-              className="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white border border-neutral-750 rounded transition-colors text-xs cursor-pointer"
-            >
-              {exploded ? "Collapse Assembly" : "Explode Assembly Layout"}
-            </button>
+            
           </div>
-
         </div>
 
         {/* Spec Details Panel (5 cols) */}
@@ -289,7 +170,7 @@ export default function CADShowcase() {
                   {activePart.includes("Chassis") && (
                     <p>Constrained 4040 structural aluminum channels reduce thermal and physical distortion under heavy load cycles. DFM clearances include standard M6 socket-cap screws with locking washers for continuous vibration suppression.</p>
                   )}
-                  {activePart.includes("laser") && (
+                  {activePart.includes("laser") || activePart.includes("LUXINAR") && (
                     <p>High peak power laser source integrated with precision-isolated optical window rings. Protected via positive pressure inert gas purge conduits to eliminate micro-dust settling.</p>
                   )}
                   {activePart.includes("Stage") && (
@@ -307,6 +188,21 @@ export default function CADShowcase() {
                   {activePart.includes("Web") && (
                     <p>Argon atmosphere chamber seal maintained below 0.1% oxygen concentration by utilizing custom fluorocarbon viton compression O-rings in the 13mm hermetic passthrough plate.</p>
                   )}
+                  {activePart.includes("Spectrometer") && (
+                    <p>The digital shutter trigger is physically mapped to the optical alignment stage. Utilizing TTL microsecond relays to ensure the exposure is completely halted during powder dispensing.</p>
+                  )}
+                  {activePart.includes("Python") && (
+                    <p>Scapy data pipeline converts raw Ethernet POWERLINK binary frames into readable time-series floating points, matching them precisely to motor kinematics for anomaly detection.</p>
+                  )}
+                  {activePart.includes("Anker") && (
+                    <p>High-temperature shielding maintains camera operational integrity inside the hostile print chamber environment. The 15cm USB-C runs straight into the custom PCB port block.</p>
+                  )}
+                  {activePart.includes("Blower") && (
+                    <p>High static pressure blowers feed custom 3D-printed directional ducts. This provides 360-degree laminar part cooling for flawless overhang prints and eliminating ABS warp.</p>
+                  )}
+                  {activePart.includes("Shroud") && (
+                    <p>Lightweight 32g ducting guarantees minimal inertia during high-acceleration toolhead moves (reducing ghosting). Computational fluid dynamics optimized internal geometry.</p>
+                  )}
                 </div>
 
                 <button
@@ -318,16 +214,21 @@ export default function CADShowcase() {
               </div>
             ) : (
               /* Prompt to select a part */
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-10 space-y-3">
-                <div className="p-3 bg-neutral-100 text-neutral-400 rounded-full">
-                  <Eye className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-neutral-800 font-bold text-sm">Select an Assembly Part</p>
-                  <p className="text-neutral-500 text-xs max-w-xs leading-relaxed">
-                    Click any element of the CAD blueprint on the left to view materials, tolerances, DFM criteria, and vibration constraints.
-                  </p>
-                </div>
+              <div className="flex-1 flex flex-col space-y-3 animate-fade-in">
+                <p className="text-neutral-500 text-xs mb-2">Select a component to view technical constraints and integration logic:</p>
+                {cadData?.components.map((c, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActivePart(c.name)}
+                    className="w-full text-left p-3 rounded-lg border border-neutral-200 bg-white hover:border-blue-400 hover:shadow-md transition-all group cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-mono text-xs font-bold text-neutral-800 group-hover:text-blue-600 transition-colors">{c.name}</span>
+                      <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500 font-mono">{c.type}</span>
+                    </div>
+                    <span className="text-[10px] text-neutral-500 block line-clamp-1">{c.spec}</span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -336,13 +237,9 @@ export default function CADShowcase() {
             <HelpCircle className="w-3.5 h-3.5" />
             Vibration limits mapped via continuous real-time FFT.
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }
-
-useGLTF.preload("/movable_laser_station_uncompressed.glb");
+useGLTF.preload("/movable_laser_station.glb");

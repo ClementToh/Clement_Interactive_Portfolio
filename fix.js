@@ -1,38 +1,36 @@
 const fs = require('fs');
 let content = fs.readFileSync('src/App.tsx', 'utf8');
 
-// replace title
+// The original line was: <button onClick={handleCopyEmail} className="hover:text-neutral-900 transition-colors cursor-pointer">Resume</button></div>
+// I broke it to be: <button onClick={handleCopyEmail} className="hover:text-neutral-900 transition-colors cursor-pointer">Resume              <button
+// ... thermal tab ...
+// </button></div>
+
+// 1. Restore the Resume button
 content = content.replace(
-  'Clement Toh <span className="text-neutral-400 font-normal">| Mechatronics Systems</span>',
-  '<a href="#root-container" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="font-mono font-bold text-base md:text-lg tracking-tight text-neutral-900 shrink-0 cursor-pointer">Clement Toh <span className="text-neutral-400 font-normal">| Mechatronics Systems</span></a>'
-);
-content = content.replace(
-  '<span className="font-mono font-bold text-base md:text-lg tracking-tight text-neutral-900 shrink-0">\n              <a href="#root-container"',
-  '<a href="#root-container"'
+  /<button onClick=\{handleCopyEmail\} className="hover:text-neutral-900 transition-colors cursor-pointer">Resume[\s\S]*?<Thermometer className="w-4 h-4 shrink-0" \/>\s*Thermal Shroud\s*<\/button>\s*<\/div>/,
+  '<button onClick={handleCopyEmail} className="hover:text-neutral-900 transition-colors cursor-pointer">Resume</button></div>'
 );
 
-// We need to carefully replace the contacts block
-let contactsRegex = /<a\s+href="https:\/\/www\.linkedin\.com\/in\/clement26"[\s\S]*?<\/a>\s*<a\s+href="assets\/Clement_Toh_US_Hardware_Engineering_2027\.pdf"[\s\S]*?<\/a>/;
+// 2. Put the thermal tab in the RIGHT place!
+// Find the Webcam Streaming tab
+const webcamMatch = `<Video className="w-4 h-4 shrink-0" />
+                Webcam Streaming
+              </button>`;
 
-let newContacts = `<a
-            href="assets/Clement_Toh_US_Hardware_Engineering_2027.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-black text-white text-xs font-mono rounded-lg transition-all shadow-md"
-          >
-            <FileText className="w-3.5 h-3.5 text-neutral-400" />
-            View Resume PDF
-          </a>
-          <a
-            href="https://www.linkedin.com/in/clement26"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-700 text-xs font-mono rounded-lg transition-all shadow-sm"
-          >
-            <Linkedin className="w-3.5 h-3.5 text-blue-500" />
-            Linkedin
-          </a>`;
+const thermalTab = `
+              <button
+                onClick={() => setActiveWorkspaceTab("thermal")}
+                className={\`px-3 md:px-5 py-3 border-b-2 font-bold transition-all flex items-center gap-1.5 md:gap-2 cursor-pointer \${
+                  activeWorkspaceTab === "thermal"
+                    ? "border-neutral-900 text-neutral-900"
+                    : "border-transparent text-neutral-400 hover:text-neutral-700"
+                }\`}
+              >
+                <Thermometer className="w-4 h-4 shrink-0" />
+                Thermal Shroud
+              </button>`;
 
-content = content.replace(contactsRegex, newContacts);
+content = content.replace(webcamMatch, webcamMatch + thermalTab);
 
 fs.writeFileSync('src/App.tsx', content);

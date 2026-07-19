@@ -1,14 +1,16 @@
 const fs = require('fs');
 let content = fs.readFileSync('src/components/CADShowcase.tsx', 'utf8');
 
-content = content.replace(
-  'Interactive CAD Assembly & DFM Specifications',
-  'CAD Assembly & DFM Specifications'
-);
+// The block to remove is:
+//         {/* Project select */}
+//         <div className="flex bg-neutral-100 p-0.5 rounded-lg text-xs font-mono overflow-x-auto max-w-full">
+//           ... all the buttons ...
+//         </div>
+//       </div>
 
 content = content.replace(
-  'Laser test bench',
-  'Laser Workstation'
+  /\s*\{\/\* Project select \*\/\}\s*<div className="flex bg-neutral-100 p-0\.5 rounded-lg text-xs font-mono overflow-x-auto max-w-full">[\s\S]*?<\/div>/,
+  ''
 );
 
 fs.writeFileSync('src/components/CADShowcase.tsx', content);

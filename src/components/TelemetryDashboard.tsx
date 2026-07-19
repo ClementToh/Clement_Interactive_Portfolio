@@ -208,8 +208,8 @@ void loop() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 10, left: -15, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />
-                <XAxis dataKey="time" stroke="#525252" fontSize={10} fontClassName="font-mono" />
-                <YAxis stroke="#525252" fontSize={10} fontClassName="font-mono" />
+                <XAxis dataKey="time" stroke="#525252" fontSize={10} className="font-mono" />
+                <YAxis stroke="#525252" fontSize={10} className="font-mono" />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#0a0a0a", borderColor: "#262626", borderRadius: "8px", fontFamily: "monospace" }}
                   labelStyle={{ color: "#737373", fontSize: "10px" }}
